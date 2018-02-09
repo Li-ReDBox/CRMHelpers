@@ -80,7 +80,7 @@ namespace Synchroniser
                         Console.WriteLine("{0}: {1}", kvp.Key, kvp.Value.ToString());
                     }
                     string result = "{}";
-                    string query = Contact.GetByEmailQuery(context.Request.Query["email"]);
+                    string query = "contacts" + Contact.GetByEmailQuery(context.Request.Query["email"]);
                     try
                     {
                         result = CRMClient.StreamToJSONString(await crmClient.GetStreamAsync(query));
