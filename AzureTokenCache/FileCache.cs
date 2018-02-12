@@ -9,12 +9,13 @@ namespace AzureTokenCache
     // http://www.cloudidentity.com/blog/2014/07/09/the-new-token-cache-in-adal-v2/
  
     /// <summary>
-    /// Persistent file storage for TokenCache
+    /// Single user, with in memory cache and persistent file storage for TokenCache
     /// </summary>
     public class FileCache : TokenCache
     {
         public string CachFilePath { get; }
         private static readonly object FileLock = new object();
+        private byte[] cacheBits;
 
         public FileCache(string filePath = @".\tokencache.data", bool shouldExist = false)
         {
@@ -65,7 +66,8 @@ namespace AzureTokenCache
         {
             lock (FileLock)
             {
-                File.WriteAllBytes(CachFilePath, this.Serialize());
+                cacheBits = this.Serialize();
+                File.WriteAllBytes(CachFilePath, cacheBits);
                 // manually change StateChanged as suggested by CloudIdentity
                 this.HasStateChanged = false;
             }
@@ -88,8 +90,9 @@ namespace AzureTokenCache
         {
             lock (FileLock)
             {
-                Console.WriteLine("... READING ...");
-                this.Deserialize(File.Exists(CachFilePath) ? File.ReadAllBytes(CachFilePath) : null);
+                if (File.Exists(CachFilePath))
+                    cacheBits = File.ReadAllBytes(CachFilePath);
+                this.Deserialize(cacheBits);
             }
         }
 
@@ -97,7 +100,10 @@ namespace AzureTokenCache
         // Reload the cache from the persistent store in case it changed since the last access.
         void BeforeAccessNotification(TokenCacheNotificationArgs args)
         {
-            ReadFromFile();
+            // Try in memory cache first
+            if (cacheBits == null)
+                ReadFromFile();
+            this.Deserialize(cacheBits);
         }
 
         // Triggered right after ADAL accessed the cache.
