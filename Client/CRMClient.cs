@@ -154,9 +154,18 @@ namespace Client
             try
             {
                 // Every status code higher than 400 there is an exception
-                response = await _httpClient.GetStreamAsync(relativePath);
+                // response = await _httpClient.GetStreamAsync(relativePath);
+                HttpResponseMessage rawResponse = await _httpClient.GetAsync(relativePath, HttpCompletionOption.ResponseHeadersRead).ConfigureAwait(false);
+                HttpContent c = rawResponse.Content;
+                response =  c != null ? await c.ReadAsStreamAsync().ConfigureAwait(false) : Stream.Null;
                 // TODO: add debug switch
-                //response = ParseStreamToJson(response);
+                if (!rawResponse.IsSuccessStatusCode)
+                {
+                    Console.WriteLine(rawResponse.StatusCode);
+                    Console.WriteLine($"Problematic uri: {relativePath}");
+                    // ParseStreamToJson(response);
+                    return null;
+                }
                 return response;
             }
             catch (HttpRequestException ex)
@@ -170,7 +179,7 @@ namespace Client
                     // 2. does not exist by ID: message: "contact With Id = 5f880511-b362-e611-80e3-c4346bc43f08 Does Not Exist"
                     // 3. does not exist by alternative key: message: "A record with the specified key values does not exist in contact entity"
                     // Query without result: empty value [], 200 status code
-                    Console.WriteLine("404, could it be really not found of record?");
+                    Console.WriteLine("404, reasons could be wrong relative path or record was not found...");
                 } else if (ex.Message.IndexOf("401") > 0)
                 {
                     Console.WriteLine("Unauthorized. Likely cache has been corrupted.");
