@@ -72,56 +72,10 @@ namespace Synchroniser
 
             app.UseMvc(routes =>
             {
-                routes.MapRoute(
-                    name: "default",
-                    template: "{controller}/{action=Index}/{id?}");
+                routes.MapRoute(name: "default", template: "{controller}/{action=Index}/{id?}");
             });
 
             applicationLifetime.ApplicationStopping.Register(DisposeResources);
-
-            app.Run(async context => {
-                var response = context.Response;
-                if (context.Request.Path.Equals("/api/crm/contact"))
-                {
-                    foreach (KeyValuePair<string, Microsoft.Extensions.Primitives.StringValues> kvp in context.Request.Query)
-                    {
-                        Console.WriteLine("{0}: {1}", kvp.Key, kvp.Value.ToString());
-                    }
-                    string result = "{}";
-                    //string query = "contacts" + Contact.GetByEmailQuery(context.Request.Query["email"]);
-                    Contact contact = new Contact((CRMClient)crmClient);
-                    try
-                    {
-                        //result = CRMClient.StreamToJSONString(await crmClient.GetStreamAsync(query));
-                        result = await contact.GetJsonStringAsync(contact.GetByEmailQuery(context.Request.Query["email"]));
-                    }
-                    catch (System.Net.Http.HttpRequestException ex)
-                    {
-                        Console.WriteLine("Captured at api endpoint");
-                        Console.WriteLine("HTTP request failed: {0}", ex.ToString());
-                        Console.Write("Exception Type: ");
-                        Console.WriteLine(ex.GetType().ToString());
-                        Console.WriteLine("Exception: " + ex.Message);
-                        if (ex.InnerException != null)
-                        {
-                            Console.WriteLine("Inner exception is: {0}", ex.InnerException.GetType().ToString());
-                        }
-                    }
-                    catch (Exception ex)
-                    {
-                        Console.WriteLine("Non-HTTP exception captured.");
-                        Console.WriteLine(ex.ToString());
-                    }
-                    await WriteHtmlAsync(response, result);
-                }
-                return;
-            });
-        }
-
-        private static async Task WriteHtmlAsync(HttpResponse response, string msg)
-        {
-            response.ContentType = "application/json";
-            await response.WriteAsync(msg);
         }
     }
 }
