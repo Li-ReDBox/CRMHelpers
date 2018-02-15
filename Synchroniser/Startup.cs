@@ -10,7 +10,6 @@ using Microsoft.Extensions.DependencyInjection;
 using Serilog;
 using ADConnectors;
 using Client;
-using Client.Entities;
 
 namespace Synchroniser
 {
@@ -19,11 +18,6 @@ namespace Synchroniser
         public Startup(IConfiguration configuration)
         {
             Configuration = configuration;
-            Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .MinimumLevel.Override("Microsoft", Serilog.Events.LogEventLevel.Information)
-                .WriteTo.File("app.log")
-                .CreateLogger();
         }
 
         private void DisposeResources()
@@ -51,8 +45,13 @@ namespace Synchroniser
                 Console.WriteLine(ex.ToString());
                 throw new ApplicationException("Cannot continue because saved token file is not found.");
             }
+
+            Log.Logger = new LoggerConfiguration()
+                .ReadFrom.Configuration(Configuration)
+                .CreateLogger();
             services.AddLogging(loggingBuilder =>
                 loggingBuilder.AddSerilog(dispose: true));
+            Log.Logger.Debug("All services have been set up.");
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

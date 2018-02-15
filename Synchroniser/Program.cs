@@ -13,6 +13,7 @@ namespace Synchroniser
 
         public static IWebHost BuildWebHost(string[] args) =>
             WebHost.CreateDefaultBuilder(args)
+                // https://github.com/aspnet/MetaPackages/blob/dev/src/Microsoft.AspNetCore/WebHost.cs#L148
                 .ConfigureAppConfiguration((_, config) => {
                     config.AddJsonFile("secrets.json", false);
                 })
