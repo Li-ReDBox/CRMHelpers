@@ -10,7 +10,6 @@ using Client.Entities;
 namespace Synchroniser.api
 {
     [Route("api/[controller]")]
-    [Produces("application/json")]
     public class AccountController : Controller
     {
         private readonly ILogger<ContactController> _logger;
@@ -25,10 +24,10 @@ namespace Synchroniser.api
         }
 
         [HttpGet("myproxy")]
-        public IActionResult Proxy()
+        public ContentResult Proxy()
         {
-            string result = "{\"aps\":{\"alert\":\"blah\",\"sound\":\"ping.aiff\"}}";
-            return Ok(result);
+            string result = "{\"apps\":{\"alert\":\"blah\",\"sound\":\"ping.aiff\"}}";
+            return Content(result, "application/json");
         }
     }
 }
