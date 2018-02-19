@@ -15,7 +15,7 @@ namespace Client
         static Regex rgx = new Regex("^[A-Za-z_][a-zA-Z0-9_]{0,}$");
 
         XmlDocument doc;
-        XmlElement fetchElement;
+        XmlElement fetchElement;  // the root element
 
         public FetchXML()
         {
@@ -103,8 +103,8 @@ namespace Client
         /// </summary>
         /// <param name="entity"></param>
         /// <param name="anotherEntity"></param>
-        /// <param name="sourceAttribute"></param>
-        /// <param name="targetAttribute"></param>
+        /// <param name="sourceAttribute">Field name of linked entity (current creating entity)</param>
+        /// <param name="targetAttribute">Field name of linking entity (root entity)</param>
         /// <param name="optionals">can be anything from the list: link-type (inner, outer), alias, intersect, visible etc</param>
         /// <returns></returns>
         public XmlElement AddLinkEntity(XmlElement entity, string anotherEntity, string sourceAttribute, string targetAttribute, Dictionary<string, string> optionals = null)
@@ -121,6 +121,27 @@ namespace Client
                 }
             }
             return linkingElement;
+        }
+
+        /// <summary>
+        /// Add entity element to fetch element.
+        /// </summary>
+        /// <param name="name"></param>
+        /// <returns></returns>
+        public XmlElement AddEntity(string name)
+        {
+            XmlElement entityElement = AddElement("entity");
+            entityElement.SetAttribute("name", name);
+            return entityElement;
+        }
+
+        /// <summary>
+        /// Return ?fetchXml=the content of xml created for query
+        /// </summary>
+        /// <returns></returns>
+        public string ToQueryString()
+        {
+            return "?fetchXml=" + doc.OuterXml;
         }
     }
 }

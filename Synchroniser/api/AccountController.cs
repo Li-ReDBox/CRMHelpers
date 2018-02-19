@@ -23,10 +23,10 @@ namespace Synchroniser.api
             _account = new Account((CRMClient)_crmClient);
         }
 
-        [HttpGet("myproxy")]
-        public ContentResult Proxy()
+        [HttpGet("ChildAccounts/{name}")]
+        public async Task<ContentResult> ChildAccounts(string name)
         {
-            string result = "{\"apps\":{\"alert\":\"blah\",\"sound\":\"ping.aiff\"}}";
+            string result = await _account.ListChildAccounts(name);
             return Content(result, "application/json");
         }
     }
