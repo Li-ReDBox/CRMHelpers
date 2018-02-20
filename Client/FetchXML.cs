@@ -7,59 +7,93 @@ namespace Client
 {
     // see https://msdn.microsoft.com/en-us/library/gg328332.aspx
     /// <summary>
-    /// Class to create XML using FetchXML for actions in Dynamics CRM  
+    /// Class to create FetchXML entity element for acting with Dynamics CRM
     /// </summary>
     class FetchXML
+    {
+        // The meaningful root element of a FetchXml <fetch><entity /></fetch>
+        public FetchElement EntityElement { get; }
+
+        public FetchXML(string entityName)
+        {
+            XmlDocument doc = new XmlDocument();
+
+            XmlElement fetchElement = doc.CreateElement("fetch");
+            fetchElement.SetAttribute("version", "1.0");
+            fetchElement.SetAttribute("mapping", "logical");
+            doc.AppendChild(fetchElement);
+
+            XmlElement entityElement = doc.CreateElement("entity");
+            fetchElement.AppendChild(entityElement);
+            entityElement.SetAttribute("name", entityName);
+            EntityElement = new FetchElement(entityElement);
+        }
+
+        /// <summary>
+        /// Create a free FetchElement
+        /// </summary>
+        /// <param name="element"></param>
+        /// <returns></returns>
+        public FetchElement CreateElement(string element)
+        {
+            XmlElement newElement = EntityElement.DOC.CreateElement(element);
+            return new FetchElement(newElement);
+        }
+
+        /// <summary>
+        /// Return ?fetchXml=the content of xml created for query
+        /// </summary>
+        /// <returns></returns>
+        public string ToQueryString()
+        {
+            return "?fetchXml=" + EntityElement.DOC.OuterXml;
+        }
+    }
+
+    /// <summary>
+    /// Class to represent and manipulate elements in FetchXml
+    /// </summary>
+    class FetchElement
     {
         // use to verify alias when in development
         static Regex rgx = new Regex("^[A-Za-z_][a-zA-Z0-9_]{0,}$");
 
-        XmlDocument doc;
-        XmlElement fetchElement;  // the root element
+        XmlElement Current;
+        public XmlDocument DOC { get; }
 
-        public FetchXML()
+        public FetchElement(XmlElement element)
         {
-            doc = new XmlDocument();
-
-            fetchElement = doc.CreateElement("fetch");
-            fetchElement.SetAttribute("version", "1.0");
-            fetchElement.SetAttribute("mapping", "logical");
-            doc.AppendChild(fetchElement);
+            Current = element;
+            DOC = Current.OwnerDocument;
         }
 
         /// <summary>
-        /// Create a new element to fetch element
+        /// Create a new child element
         /// </summary>
-        /// <param name="element">Name of element</param>
-        /// <returns>The new instance of XmlElement</returns>
-        public XmlElement AddElement(string element)
-        {
-            return AddElement(fetchElement, element);
-        }
-
-        /// <summary>
-        /// Create a new element to parent element
-        /// </summary>
-        /// <param name="parent"></param>
-        /// <param name="element">Name of element</param>
+        /// <param name="element"></param>
         /// <returns></returns>
-        public XmlElement AddElement(XmlElement parent, string element)
+        public FetchElement AddElement(string element)
         {
-            XmlElement newElement = doc.CreateElement(element);
-            parent.AppendChild(newElement);
-            return newElement;
+            XmlElement newElement = DOC.CreateElement(element);
+            Current.AppendChild(newElement);
+            return new FetchElement(newElement);
         }
 
+        public void SetAttribute(string name, string value)
+        {
+            Current.SetAttribute(name, value);
+        }
+
+        #region shortcuts
         /// <summary>
-        /// Create attribute element to an entity element to return field value
+        /// Create an attribute element for returning field value
         /// </summary>
-        /// <param name="parent"></param>
-        /// <param name="name">Name of attribute to be included</param>
+        /// <param name="name"></param>
         /// <param name="optionals">e.g. alias, aggregate</param>
         /// <returns></returns>
-        public XmlElement AddField(XmlElement parent, string name, Dictionary<string, string> optionals = null)
+        public void AddField(string name, Dictionary<string, string> optionals = null)
         {
-            XmlElement field = AddElement(parent, "attribute");
+            FetchElement field = AddElement("attribute");
             field.SetAttribute("name", name);
             if (optionals != null)
             {
@@ -72,26 +106,24 @@ namespace Client
                     field.SetAttribute(item.Key, item.Value);
                 }
             }
-            return field;
         }
 
-        public XmlElement AddFilter(XmlElement entity, string type = "and")
+        public FetchElement AddFilter(string type = "and")
         {
-            XmlElement filterElement = AddElement(entity, "filter");
+            FetchElement filterElement = AddElement("filter");
             filterElement.SetAttribute("type", type);
             return filterElement;
         }
 
         /// <summary>
-        /// Add a condition element to a filter element
+        /// Add a condition element to Current element - a filter element
         /// </summary>
-        /// <param name="filterElement"></param>
-        /// <param name="target"></param>
+        /// <param name="target">Field on which a filter applies to </param>
         /// <param name="op"></param>
         /// <param name="value"></param>
-        public void AddCondition(XmlElement filterElement, string target, string op, string value = null)
+        public void AddCondition(string target, string op, string value = null)
         {
-            XmlElement condElement = AddElement(filterElement, "condition");
+            FetchElement condElement = AddElement("condition");
             condElement.SetAttribute("attribute", target);
             condElement.SetAttribute("operator", op);
             if (!string.IsNullOrEmpty(value))
@@ -99,18 +131,17 @@ namespace Client
         }
 
         /// <summary>
-        /// Add a link entity to an entity
+        /// Add a link entity to current element
         /// </summary>
-        /// <param name="entity"></param>
-        /// <param name="anotherEntity"></param>
-        /// <param name="sourceAttribute">Field name of linked entity (current creating entity)</param>
-        /// <param name="targetAttribute">Field name of linking entity (root entity)</param>
+        /// <param name="toEntity">Another entity this entity links to </param>
+        /// <param name="sourceAttribute"></param>
+        /// <param name="targetAttribute"></param>
         /// <param name="optionals">can be anything from the list: link-type (inner, outer), alias, intersect, visible etc</param>
         /// <returns></returns>
-        public XmlElement AddLinkEntity(XmlElement entity, string anotherEntity, string sourceAttribute, string targetAttribute, Dictionary<string, string> optionals = null)
+        public FetchElement AddLinkEntity(string toEntity, string sourceAttribute, string targetAttribute, Dictionary<string, string> optionals = null)
         {
-            XmlElement linkingElement = AddElement(entity, "link-entity");
-            linkingElement.SetAttribute("name", anotherEntity);
+            FetchElement linkingElement = AddElement("link-entity");
+            linkingElement.SetAttribute("name", toEntity);
             linkingElement.SetAttribute("from", sourceAttribute);
             linkingElement.SetAttribute("to", targetAttribute);
             if (optionals != null)
@@ -122,26 +153,6 @@ namespace Client
             }
             return linkingElement;
         }
-
-        /// <summary>
-        /// Add entity element to fetch element.
-        /// </summary>
-        /// <param name="name"></param>
-        /// <returns></returns>
-        public XmlElement AddEntity(string name)
-        {
-            XmlElement entityElement = AddElement("entity");
-            entityElement.SetAttribute("name", name);
-            return entityElement;
-        }
-
-        /// <summary>
-        /// Return ?fetchXml=the content of xml created for query
-        /// </summary>
-        /// <returns></returns>
-        public string ToQueryString()
-        {
-            return "?fetchXml=" + doc.OuterXml;
-        }
+        #endregion
     }
 }

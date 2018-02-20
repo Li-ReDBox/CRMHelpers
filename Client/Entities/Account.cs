@@ -54,13 +54,13 @@ namespace Client.Entities
         /// <returns>The result from Dynamics server as string</returns>
         public async Task<string> ListChildAccounts(string parent)
         {
-            FetchXML xml = new FetchXML();
-            XmlElement entity = xml.AddEntity(ENTITY);
-            xml.AddField(entity, "name");
-            xml.AddField(entity, "accountid");
-            XmlElement linkedEntiry = xml.AddLinkEntity(entity, "account", "accountid", "parentaccountid");
-            XmlElement filter = xml.AddFilter(linkedEntiry);
-            xml.AddCondition(filter, "name", "eq", value: parent);
+            var xml = new FetchXML(ENTITY);
+            FetchElement entity = xml.EntityElement;
+            entity.AddField("name");
+            entity.AddField("accountid");
+            FetchElement linkedEntiry = entity.AddLinkEntity("account", "accountid", "parentaccountid");
+            FetchElement filter = linkedEntiry.AddFilter();
+            filter.AddCondition("name", "eq", value: parent);
             return await GetJsonStringAsync(xml.ToQueryString());
         }
 
