@@ -64,5 +64,21 @@ namespace Synchroniser.Controllers
             }
             return await Edit(new Guid(content.ID));
         }
+
+        public async Task<IActionResult> Search(string id)
+        {
+            _logger.LogDebug($"ContactController::Search has been called with {id}");
+            if (!string.IsNullOrEmpty(id))
+            {
+                _logger.LogDebug($"You are looking for the contact by {id}");
+                var result = await contact.GetByEmail(id);
+                Console.WriteLine(result.ID);
+                if (result != null)
+                {
+                    return Redirect(Url.Action("Get", new { id = new Guid(result.ID) }));
+                }
+            }
+            return View();
+        }
     }
 }
