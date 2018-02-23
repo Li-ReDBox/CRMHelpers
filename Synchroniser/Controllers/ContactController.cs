@@ -72,7 +72,6 @@ namespace Synchroniser.Controllers
             {
                 _logger.LogDebug($"You are looking for the contact by {id}");
                 var result = await contact.GetByEmail(id);
-                Console.WriteLine(result.ID);
                 if (result != null)
                 {
                     return Redirect(Url.Action("Get", new { id = new Guid(result.ID) }));
