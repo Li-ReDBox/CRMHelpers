@@ -7,7 +7,7 @@ namespace Client
 {
     // see https://msdn.microsoft.com/en-us/library/gg328332.aspx
     /// <summary>
-    /// Class to create FetchXML entity element for acting with Dynamics CRM
+    /// Class to create FetchXML entity element as an XML doc for acting with Dynamics CRM
     /// </summary>
     public class FetchXML
     {
@@ -34,6 +34,7 @@ namespace Client
         /// </summary>
         /// <param name="element"></param>
         /// <returns></returns>
+        // TODO: re-think if this is needed?
         public FetchElement CreateElement(string element)
         {
             XmlElement newElement = EntityElement.DOC.CreateElement(element);
@@ -72,12 +73,35 @@ namespace Client
         /// </summary>
         /// <param name="elementType">Element like link-entity, filter, even condition</param>
         /// <param name="name">Value of name attribute</param>
-        public FetchElement(string elementType, string name=null)
+        public FetchElement(string elementType)
         {
             DOC = new XmlDocument();
             Current = DOC.CreateElement(elementType);
+            DOC.AppendChild(Current);
+        }
+
+        /// <summary>
+        /// Constructor to create building block element for complex queries
+        /// </summary>
+        /// <param name="elementType">Element like link-entity, filter, even condition</param>
+        /// <param name="name">Value of name attribute</param>
+        public FetchElement(string elementType, string name) : this(elementType)
+        {
             if (!string.IsNullOrEmpty(name))
                 Current.SetAttribute("name", name);
+        }
+
+        /// <summary>
+        /// Constructor to create building block element for complex queries
+        /// </summary>
+        /// <param name="elementType">Element like link-entity, filter, even condition</param>
+        /// <param name="attributes"></param>
+        public FetchElement(string elementType, Dictionary<string, string> attributes) : this(elementType)
+        {
+            foreach (var attribute in attributes)
+            {
+                Current.SetAttribute(attribute.Key, attribute.Value);
+            }
         }
 
         /// <summary>
@@ -95,6 +119,16 @@ namespace Client
         public void SetAttribute(string name, string value)
         {
             Current.SetAttribute(name, value);
+        }
+
+        /// <summary>
+        /// Add a building block FetchElement created by helper function to Current FetchElement
+        /// </summary>
+        /// <param name="element"></param>
+        public void AddFragment(FetchElement element)
+        {
+            XmlNode imported = DOC.ImportNode(element.DOC.DocumentElement, true);
+            Current.AppendChild(imported);
         }
 
         #region shortcuts
