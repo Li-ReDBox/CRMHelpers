@@ -9,6 +9,7 @@ using Client.Types;
 
 namespace Synchroniser.Pages.Entities.Orders
 {
+    // TODO: confirm to remove
     public class IndexModel : PageModel
     {
         private readonly ITokenConsumer _crmClient;
