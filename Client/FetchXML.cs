@@ -9,7 +9,7 @@ namespace Client
     /// <summary>
     /// Class to create FetchXML entity element for acting with Dynamics CRM
     /// </summary>
-    class FetchXML
+    public class FetchXML
     {
         // The meaningful root element of a FetchXml <fetch><entity /></fetch>
         public FetchElement EntityElement { get; }
@@ -53,7 +53,7 @@ namespace Client
     /// <summary>
     /// Class to represent and manipulate elements in FetchXml
     /// </summary>
-    class FetchElement
+    public class FetchElement
     {
         // use to verify alias when in development
         static Regex rgx = new Regex("^[A-Za-z_][a-zA-Z0-9_]{0,}$");
@@ -65,6 +65,19 @@ namespace Client
         {
             Current = element;
             DOC = Current.OwnerDocument;
+        }
+
+        /// <summary>
+        /// Constructor to create building block element for complex queries
+        /// </summary>
+        /// <param name="elementType">Element like link-entity, filter, even condition</param>
+        /// <param name="name">Value of name attribute</param>
+        public FetchElement(string elementType, string name=null)
+        {
+            DOC = new XmlDocument();
+            Current = DOC.CreateElement(elementType);
+            if (!string.IsNullOrEmpty(name))
+                Current.SetAttribute("name", name);
         }
 
         /// <summary>
