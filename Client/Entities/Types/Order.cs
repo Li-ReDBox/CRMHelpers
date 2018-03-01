@@ -31,7 +31,7 @@ namespace Client.Types
         [DataMember(Name = "statuscode", EmitDefaultValue = false)]
         public int Status { get; private set; }
 
-        [DataMember(Name = "role")]
+        [DataMember(Name = "role", EmitDefaultValue = false)]
         public string Role { set; get; }
     }
 
